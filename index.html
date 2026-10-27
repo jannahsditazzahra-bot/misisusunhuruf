@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Misi Susun Huruf: Ayo Temukan Kata!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            min-height: 100vh;
+            touch-action: manipulation; /* Prevent zoom on double tap on mobile */
+            overflow-x: hidden;
+        }
+
+        .bounce-in {
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .letter-btn {
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 0 #d1d5db; /* Default gray shadow */
+        }
+        
+        .letter-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 transparent;
+        }
+
+        .letter-btn.available {
+            background-color: #fef08a; /* Yellow */
+            color: #854d0e;
+            border: 2px solid #eab308;
+            box-shadow: 0 4px 0 #ca8a04;
+        }
+
+        .letter-btn.selected {
+            background-color: #bfdbfe; /* Blue */
+            color: #1e3a8a;
+            border: 2px solid #3b82f6;
+            box-shadow: 0 4px 0 #2563eb;
+        }
+
+        .btn-primary {
+            background-color: #4ade80; /* Green */
+            color: white;
+            box-shadow: 0 4px 0 #16a34a;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 transparent;
+        }
+
+        .emoji-display {
+            filter: drop-shadow(0px 10px 10px rgba(0,0,0,0.1));
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(2px);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+
+    <!-- AUDIO CONTEXT (Generated dynamically in JS) -->
+
+    <!-- SCREEN 1: START SCREEN -->
+    <div id="startScreen" class="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-8 text-center bounce-in flex flex-col items-center border-4 border-yellow-400 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-4 bg-yellow-400"></div>
+        <p class="text-blue-600 font-bold tracking-wider mt-4">KELAS 1A • SDIT AZ-ZAHRA</p>
+        <h1 class="text-4xl md:text-5xl font-black text-pink-500 mt-4 mb-2 drop-shadow-md leading-tight">
+            Misi Susun Huruf:<br><span class="text-yellow-500">Ayo Temukan Kata!</span>
+        </h1>
+        
+        <!-- Ilustrasi Tema Islami -->
+        <div class="relative w-48 h-48 mx-auto my-6 bg-gradient-to-b from-green-50 to-green-200 rounded-full flex flex-col items-center justify-center border-4 border-green-400 shadow-lg overflow-hidden bounce-in" style="animation-delay: 0.2s;">
+            <!-- Background Masjid -->
+            <div class="absolute text-8xl opacity-40 transform -translate-y-4">🕌</div>
+            <!-- Animasi Bintang dan Bulan -->
+            <div class="absolute top-5 right-5 text-yellow-500 text-3xl animate-pulse">⭐</div>
+            <div class="absolute top-7 left-5 text-yellow-500 text-3xl">🌙</div>
+            <!-- Karakter Anak -->
+            <div class="z-10 flex gap-1 text-6xl transform translate-y-2">
+                <span class="drop-shadow-md">🧕</span>
+                <span class="drop-shadow-md">👦</span>
+            </div>
+            <!-- Buku / Al-Qur'an -->
+            <div class="absolute bottom-2 text-4xl z-20 drop-shadow-md">📖</div>
+        </div>
+        
+        <p class="text-gray-600 font-bold mb-6 text-lg">Siap belajar menyusun kata?</p>
+        
+        <div class="w-full max-w-xs mb-6">
+            <label for="playerName" class="block text-left text-gray-700 font-bold mb-2">Siapa namamu?</label>
+            <input type="text" id="playerName" placeholder="Tulis namamu di sini..." class="w-full px-4 py-3 rounded-xl border-2 border-blue-300 focus:border-blue-500 focus:outline-none text-xl text-center font-bold text-gray-800 shadow-inner">
+        </div>
+
+        <button onclick="startGame()" class="btn-primary text-2xl font-black py-4 px-10 rounded-2xl w-full max-w-xs border-2 border-green-600">
+            MULAI BERMAIN
+        </button>
+    </div>
+
+    <!-- SCREEN 2: GAME SCREEN -->
+    <div id="gameScreen" class="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 text-center hidden border-4 border-blue-400 relative">
+        <!-- Header Info -->
+        <div class="flex justify-between items-center bg-blue-100 p-3 rounded-xl mb-6 font-bold text-blue-800">
+            <div id="playerDisplay" class="truncate max-w-[100px] text-left">Nama</div>
+            <div class="bg-white px-3 py-1 rounded-lg shadow-sm">
+                Soal <span id="questionCounter" class="text-pink-600 text-lg">1</span> dari 10
+            </div>
+            <div class="flex items-center gap-1">
+                ⭐ <span id="scoreDisplay" class="text-lg">0</span>
+            </div>
+        </div>
+
+        <!-- Image / Emoji Petunjuk -->
+        <div class="bg-gray-50 rounded-2xl p-6 mb-6 shadow-inner border-2 border-gray-100 flex flex-col items-center justify-center min-h-[160px]">
+            <div id="imageClue" class="text-8xl emoji-display mb-2">⚽</div>
+            <p class="text-gray-500 font-bold text-sm">Gambar Petunjuk</p>
+        </div>
+
+        <!-- Kotak Jawaban (Selected Letters) -->
+        <div class="mb-6">
+            <p class="text-gray-600 font-bold mb-2 text-sm uppercase tracking-wide">Kotak Jawaban</p>
+            <div id="answerBox" class="flex flex-wrap justify-center gap-2 min-h-[70px] bg-blue-50 p-3 rounded-2xl border-2 border-dashed border-blue-300">
+                <!-- Selected letters will appear here -->
+            </div>
+        </div>
+
+        <!-- Huruf Acak (Available Letters) -->
+        <div class="mb-8">
+            <p class="text-gray-600 font-bold mb-2 text-sm uppercase tracking-wide">Pilih Huruf Di Bawah Ini</p>
+            <div id="lettersContainer" class="flex flex-wrap justify-center gap-3 min-h-[70px]">
+                <!-- Scrambled letters will appear here -->
+            </div>
+        </div>
+
+        <!-- Tombol Periksa -->
+        <button onclick="checkAnswer()" class="btn-primary text-2xl font-black py-4 px-8 rounded-2xl w-full border-2 border-green-600">
+            PERIKSA JAWABAN
+        </button>
+    </div>
+
+    <!-- SCREEN 3: END SCREEN -->
+    <div id="endScreen" class="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-8 text-center hidden flex-col items-center border-4 border-pink-400 relative">
+        <h2 class="text-4xl font-black text-pink-500 mb-2">Selesai!</h2>
+        <div class="text-7xl my-4 emoji-display">🏆🎉</div>
+        
+        <p class="text-xl text-gray-700 font-bold mb-2">Skor Akhir <span id="finalPlayerName" class="text-blue-600"></span>:</p>
+        <div class="text-6xl font-black text-yellow-500 mb-2 drop-shadow-md">
+            <span id="finalScore">100</span>
+        </div>
+        <p class="text-lg text-green-600 font-bold mb-6">Jawaban Benar: <span id="correctCount">10</span>/10</p>
+        
+        <div class="bg-yellow-100 border-2 border-yellow-300 p-4 rounded-xl mb-8 text-left">
+            <p class="text-yellow-800 font-bold leading-relaxed text-center">
+                “Alhamdulillah, kamu hebat! Kamu sudah belajar menyusun huruf menjadi kata. Terus berlatih membaca, ya!”
+            </p>
+        </div>
+
+        <button onclick="resetGame()" class="btn-primary text-2xl font-black py-4 px-10 rounded-2xl w-full max-w-xs border-2 border-green-600">
+            MAIN LAGI
+        </button>
+    </div>
+
+    <!-- MODAL FEEDBACK -->
+    <div id="feedbackModal" class="fixed inset-0 modal-overlay z-50 hidden flex-col items-center justify-center p-4">
+        <div id="feedbackCard" class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center border-4">
+            <div id="feedbackIcon" class="text-7xl mb-4 emoji-display">⭐</div>
+            <h3 id="feedbackTitle" class="text-3xl font-black mb-2">Hebat!</h3>
+            <p id="feedbackMessage" class="text-lg font-bold text-gray-600 mb-6">Jawabanmu benar!</p>
+            <button id="feedbackBtn" onclick="closeFeedback()" class="btn-primary text-xl font-black py-3 px-8 rounded-xl w-full border-2 border-green-600">
+                LANJUT
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA SOAL ---
+        const questionsData = [
+            { word: "BOLA", scrambled: ["L", "B", "A", "O"], image: "⚽" },
+            { word: "BUKU", scrambled: ["U", "B", "U", "K"], image: "📚" },
+            { word: "KURSI", scrambled: ["U", "R", "K", "I", "S"], image: "🪑" },
+            { word: "SAPI", scrambled: ["I", "S", "A", "P"], image: "🐄" },
+            { word: "IKAN", scrambled: ["N", "I", "K", "A"], image: "🐟" },
+            { word: "TOPI", scrambled: ["P", "I", "T", "O"], image: "🧢" },
+            { word: "MATA", scrambled: ["A", "T", "M", "A"], image: "👁️" },
+            { word: "PAGI", scrambled: ["I", "P", "G", "A"], image: "🌅" },
+            { word: "ROTI", scrambled: ["T", "R", "I", "O"], image: "🍞" },
+            { word: "KAKI", scrambled: ["I", "K", "A", "K"], image: "🦶" }
+        ];
+
+        // --- STATE VARIABLES ---
+        let playerName = "";
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let correctAnswersCount = 0;
+        let availableLetters = []; // { id, char }
+        let selectedLetters = [];  // { id, char }
+
+        // --- AUDIO SYSTEM (Web Audio API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'win') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.15); // E5
+                osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.3); // G5
+                osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.45); // C6
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.8);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.8);
+            }
+        }
+
+        // --- GAME LOGIC ---
+
+        function startGame() {
+            const nameInput = document.getElementById('playerName').value.trim();
+            if (nameInput === "") {
+                playSound('wrong');
+                const inputEl = document.getElementById('playerName');
+                inputEl.classList.add('shake');
+                setTimeout(() => inputEl.classList.remove('shake'), 500);
+                return;
+            }
+            
+            // Initialize Audio
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            playSound('click');
+
+            playerName = nameInput;
+            document.getElementById('playerDisplay').innerText = playerName;
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            correctAnswersCount = 0;
+            updateScoreUI();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = questionsData[currentQuestionIndex];
+            
+            // Update UI Counters
+            document.getElementById('questionCounter').innerText = currentQuestionIndex + 1;
+            
+            // Set Image/Emoji
+            const imageEl = document.getElementById('imageClue');
+            if (q.image.includes('.')) {
+                // Tampilkan sebagai file gambar dengan src langsung
+                // Menggunakan onerror fallback jika gambar gagal dimuat di pratinjau
+                imageEl.innerHTML = `<img src="${q.image}" alt="Gambar Petunjuk" onerror="this.onerror=null; this.src='https://placehold.co/140x140/fef08a/854d0e?text=MEJA&font=Nunito';" style="height: 140px; width: 140px; object-fit: contain; margin: 0 auto; border-radius: 12px; display: block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">`;
+                // Hapus class ukuran teks khusus emoji agar gambar tidak terganggu
+                imageEl.classList.remove('text-8xl', 'emoji-display');
+            } else {
+                // Tampilkan sebagai teks/emoji
+                imageEl.innerHTML = q.image;
+                // Kembalikan class ukuran teks khusus emoji
+                imageEl.classList.add('text-8xl', 'emoji-display');
+            }
+            
+            imageEl.classList.remove('bounce-in');
+            void imageEl.offsetWidth; // trigger reflow
+            imageEl.classList.add('bounce-in');
+
+            // Setup Letters
+            availableLetters = q.scrambled.map((char, index) => ({ id: `letter_${index}`, char: char }));
+            selectedLetters = [];
+
+            renderLetters();
+        }
+
+        function renderLetters() {
+            const availableContainer = document.getElementById('lettersContainer');
+            const answerContainer = document.getElementById('answerBox');
+            
+            availableContainer.innerHTML = '';
+            answerContainer.innerHTML = '';
+
+            // Render Available
+            availableLetters.forEach(item => {
+                const btn = createLetterButton(item, 'available', () => selectLetter(item));
+                availableContainer.appendChild(btn);
+            });
+
+            // Render Selected
+            selectedLetters.forEach(item => {
+                const btn = createLetterButton(item, 'selected', () => deselectLetter(item));
+                answerContainer.appendChild(btn);
+            });
+        }
+
+        function createLetterButton(item, type, onClick) {
+            const btn = document.createElement('button');
+            btn.innerText = item.char;
+            btn.className = `letter-btn ${type} w-14 h-14 sm:w-16 sm:h-16 text-2xl sm:text-3xl font-black rounded-xl m-1 flex items-center justify-center bounce-in`;
+            btn.onclick = () => {
+                playSound('click');
+                onClick();
+            };
+            return btn;
+        }
+
+        function selectLetter(item) {
+            // Remove from available
+            availableLetters = availableLetters.filter(l => l.id !== item.id);
+            // Add to selected
+            selectedLetters.push(item);
+            renderLetters();
+        }
+
+        function deselectLetter(item) {
+            // Remove from selected
+            selectedLetters = selectedLetters.filter(l => l.id !== item.id);
+            // Add back to available (we can push it or keep original order, push is fine for games)
+            availableLetters.push(item);
+            renderLetters();
+        }
+
+        function checkAnswer() {
+            const q = questionsData[currentQuestionIndex];
+            const currentAnswer = selectedLetters.map(l => l.char).join('');
+            
+            if (currentAnswer === "") {
+                showFeedback(false, "Pilih hurufnya dulu, ya!");
+                return;
+            }
+
+            if (currentAnswer === q.word) {
+                // Benar
+                playSound('correct');
+                score += 10;
+                correctAnswersCount++;
+                updateScoreUI();
+                showFeedback(true, "Hebat! Jawabanmu benar!");
+                fireConfettiSmall();
+            } else {
+                // Salah
+                playSound('wrong');
+                showFeedback(false, "Ayo coba lagi! Kamu pasti bisa!");
+            }
+        }
+
+        function updateScoreUI() {
+            document.getElementById('scoreDisplay').innerText = score;
+        }
+
+        // --- FEEDBACK MODAL ---
+        function showFeedback(isCorrect, message) {
+            const modal = document.getElementById('feedbackModal');
+            const card = document.getElementById('feedbackCard');
+            const icon = document.getElementById('feedbackIcon');
+            const title = document.getElementById('feedbackTitle');
+            const msg = document.getElementById('feedbackMessage');
+            const btn = document.getElementById('feedbackBtn');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            card.classList.remove('bounce-in', 'shake');
+            void card.offsetWidth;
+
+            if (isCorrect) {
+                card.className = "bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center border-4 border-green-400 bounce-in";
+                icon.innerText = "🌟";
+                title.innerText = "Luar Biasa!";
+                title.className = "text-3xl font-black mb-2 text-green-500";
+                msg.innerText = message;
+                btn.innerText = currentQuestionIndex === questionsData.length - 1 ? "LIHAT HASIL" : "SOAL BERIKUTNYA";
+                btn.className = "btn-primary text-xl font-black py-3 px-8 rounded-xl w-full border-2 border-green-600 bg-green-500 text-white shadow-[0_4px_0_#16a34a]";
+                btn.onclick = () => {
+                    closeFeedback();
+                    nextQuestion();
+                };
+            } else {
+                card.className = "bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center border-4 border-red-400 shake";
+                icon.innerText = "💪";
+                title.innerText = "Ups..";
+                title.className = "text-3xl font-black mb-2 text-red-500";
+                msg.innerText = message;
+                btn.innerText = "COBA LAGI";
+                btn.className = "btn-primary text-xl font-black py-3 px-8 rounded-xl w-full border-2 border-red-600 bg-red-400 text-white shadow-[0_4px_0_#dc2626]";
+                btn.onclick = () => {
+                    closeFeedback();
+                    // Kembalikan huruf yang salah ke tempat semula
+                    while(selectedLetters.length > 0) {
+                        availableLetters.push(selectedLetters.pop());
+                    }
+                    renderLetters();
+                };
+            }
+        }
+
+        function closeFeedback() {
+            playSound('click');
+            const modal = document.getElementById('feedbackModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questionsData.length) {
+                loadQuestion();
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            playSound('win');
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('endScreen').classList.remove('hidden');
+            document.getElementById('endScreen').classList.add('flex');
+            
+            document.getElementById('finalPlayerName').innerText = playerName;
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('correctCount').innerText = correctAnswersCount;
+
+            fireConfettiBig();
+        }
+
+        function resetGame() {
+            playSound('click');
+            document.getElementById('endScreen').classList.add('hidden');
+            document.getElementById('endScreen').classList.remove('flex');
+            
+            // Balik ke layar mulai tapi pertahankan nama jika mau
+            document.getElementById('startScreen').classList.remove('hidden');
+            document.getElementById('playerName').value = '';
+        }
+
+        // --- CONFETTI EFFECTS ---
+        function fireConfettiSmall() {
+            confetti({
+                particleCount: 50,
+                spread: 60,
+                origin: { y: 0.8 },
+                colors: ['#fef08a', '#4ade80', '#60a5fa']
+            });
+        }
+
+        function fireConfettiBig() {
+            const duration = 3000;
+            const end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#ec4899', '#3b82f6', '#eab308']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#ec4899', '#3b82f6', '#eab308']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+    </script>
+</body>
+</html>
